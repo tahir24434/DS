@@ -1,14 +1,17 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <limits.h>
 
-typedef struct {
+struct node_s {
   char* key;
   char* value;
-  struct node_t* next;
-} node_t;
+  struct node_s* next;
+};
+typedef struct node_s node_t;
 
 typedef struct {
-  char** table;
+  node_t** table;
   int size;
 } hashtable_t;
 
@@ -17,7 +20,7 @@ hashtable_t* ht_create (int size) {
   hashtable_t* hashtable = NULL;
   if((hashtable = malloc(sizeof(hashtable_t)))== NULL) {
     return NULL;
-  } 
+  }
 
   // malloc for table array.
   if((hashtable->table = malloc(sizeof(node_t*) * size)) == NULL) {
@@ -45,7 +48,7 @@ unsigned long int pre_hash(char* key) {
 
 // Map giant universe of keys to the small set of slots in the table.
 // 3 populare methods. 1) Division method 2) Mulitplication method 3) Universal Hashing
-// Third one is theoretically good. For ease, we will follow division method i.e. 
+// Third one is theoretically good. For ease, we will follow division method i.e.
 // h(k) = k mod m.
 int hash(hashtable_t* hashtable, unsigned long int natural_num_key) {
   return natural_num_key % hashtable->size;
@@ -60,7 +63,7 @@ char* duplicate_string (char* src) {
 
 node_t* ht_newnode(char* key, char* value) {
   node_t* node;
-  if ((node = malloc(sizeof node_t)) == NULL) return NULL;
+  if ((node = malloc(sizeof(node_t))) == NULL) return NULL;
 
   if ((node->key = duplicate_string (key)) == NULL) return NULL;
   if ((node->value= duplicate_string (value)) == NULL) return NULL;
@@ -68,22 +71,24 @@ node_t* ht_newnode(char* key, char* value) {
   return node;
 }
 
-ht_insert(hashtable_t* hashtable, char* key, char* value) {
+ht_set(hashtable_t* hashtable, char* key, char* value) {
 
+  node_t* next = NULL;
+  node_t* last = NULL;
   // Create a new node.
   node_t* node = ht_newnode (key, value);
-  
+
   // Get slot of table where new items should be inserted.
   unsigned long int prehash = pre_hash(key);
   int slot = hash(hashtable, prehash);
 
   // Check whether "key" already exist?
-  node_t* next = hashtable->table[slot];
+  next = hashtable->table[slot];
   while (next != NULL && (strcmp(key, next->key) != 0)) {
     last = next;
     next = next->next;
   }
-  
+
   // Key exists
   if (next != NULL && (strcmp(key, next->key) == 0)) {
     free(next->value);
@@ -95,4 +100,39 @@ ht_insert(hashtable_t* hashtable, char* key, char* value) {
       last->next = node;
     }
   }
+}
+
+char* ht_get(hashtable_t* hashtable, char* key) {
+  node_t* node = NULL;
+
+  unsigned long int prehash = pre_hash(key);
+  int slot = hash(hashtable, prehash);
+  node = hashtable->table[slot];
+
+  while(node != NULL && (strcmp(key, node->key) != 0)) {
+    node = node->next;
+  }
+
+  if (strcmp(key, node->key) == 0) {
+    return node->value;
+  } else {
+    return NULL;
+  }
+}
+
+int main(void){
+  printf("I am alive\n");
+  hashtable_t *hashtable = ht_create( 65536 );
+
+  ht_set( hashtable, "key1", "inky" );
+  ht_set( hashtable, "key2", "pinky" );
+  ht_set( hashtable, "key3", "blinky" );
+  ht_set( hashtable, "key4", "floyd" );
+
+  printf( "%s\n", ht_get( hashtable, "key1" ) );
+  printf( "%s\n", ht_get( hashtable, "key2" ) );
+  printf( "%s\n", ht_get( hashtable, "key3" ) );
+  printf( "%s\n", ht_get( hashtable, "key4" ) );
+
+  return 0;
 }
