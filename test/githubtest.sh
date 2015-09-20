@@ -1,2 +1,2 @@
 echo "I am alive"
-echo "I am going to trigger some events."
+echo "Yes, I am going to trigger some events."
